@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compra Aprovada | Muito Obrigado!</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-color: #f4f6f8;
+      --panel-color: #ffffff;
+      --border-color: #e2e8f0;
+      --text-color: #333333;
+      --text-muted: #718096;
+      --primary-color: #0ccc1e;
+      --font-family: 'Rubik', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: var(--font-family);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .success-card {
+      background-color: var(--panel-color);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      max-width: 500px;
+      width: 100%;
+      padding: 3rem 2rem;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    }
+
+    .icon-container {
+      width: 80px;
+      height: 80px;
+      background-color: rgba(12, 204, 30, 0.1);
+      border: 2px solid rgba(12, 204, 30, 0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+      color: var(--primary-color);
+    }
+
+    .icon-container svg {
+      width: 40px;
+      height: 40px;
+      fill: currentColor;
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      color: #000000;
+    }
+
+    p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+
+    .details-box {
+      background-color: #fafafa;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.25rem;
+      text-align: left;
+      margin-bottom: 2rem;
+    }
+
+    .details-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .details-item:last-child {
+      margin-bottom: 0;
+      border-top: 1px solid var(--border-color);
+      padding-top: 0.5rem;
+      font-weight: 700;
+    }
+
+    .btn-home {
+      display: inline-block;
+      width: 100%;
+      background-color: var(--primary-color);
+      color: #fff;
+      text-decoration: none;
+      padding: 1rem 2rem;
+      border-radius: 30px;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.9rem;
+      letter-spacing: 0.05em;
+      transition: background-color 0.2s ease;
+      box-shadow: 0 4px 12px rgba(12, 204, 30, 0.2);
+    }
+
+    .btn-home:hover {
+      background-color: #0ab01a;
+    }
+  </style>
+
+  <!-- Meta Pixel Code -->
+  <script>
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window, document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '1484097396735892');
+  fbq('track', 'PageView');
+
+  // Track Purchase Event using stored cents
+  (function() {
+    var lastPurchaseCents = localStorage.getItem('last_purchase_cents');
+    var value = lastPurchaseCents ? (parseInt(lastPurchaseCents, 10) / 100) : 67.90;
+    fbq('track', 'Purchase', {
+      value: value,
+      currency: 'BRL'
+    });
+  })();
+  </script>
+  <noscript>
+  <img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=1484097396735892&ev=PageView&noscript=1"
+  />
+  </noscript>
+  <!-- End Meta Pixel Code -->
+</head>
+<body>
+
+  <div class="success-card">
+    <div class="icon-container">
+      <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+    </div>
+    
+    <h1>Pagamento Aprovado!</h1>
+    <p>Sua compra foi finalizada com sucesso. Você receberá um e-mail com a confirmação e os detalhes do envio em instantes.</p>
+
+    <div class="details-box">
+      <div class="details-item">
+        <span style="color: var(--text-muted);">Status do Pedido:</span>
+        <span style="color: var(--primary-color); font-weight: 700;">Aprovado & Pago</span>
+      </div>
+      <div class="details-item">
+        <span style="color: var(--text-muted);">Código da Transação:</span>
+        <span style="font-family: monospace;" id="transaction-id">#TB-${Math.floor(Math.random() * 900000 + 100000)}</span>
+      </div>
+    </div>
+
+    <a href="/" class="btn-home">Voltar para o site</a>
+  </div>
+
+</body>
+</html>

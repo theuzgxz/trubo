@@ -1,10 +1,13 @@
 /**
- * api/tribopay_router.js — Roteador unificado POST /create-transaction para TriboPay
+ * api/tribopay_router.js — Roteador unificado POST /create-transaction
+ *  - Pix        → SyncPay  (sem alertas de golpe/fraude)
+ *  - Cartão     → TriboPay (integração já existente)
  */
 
 const express = require('express');
 const router = express.Router();
 const tribopay = require('./tribopay');
+const syncpay = require('./syncpay');
 const cart = require('./cart');
 const db = require('./db');
 const { validateCPF, validateEmail, validatePhone, onlyNumbers, sanitize } = require('./utils');
@@ -43,82 +46,98 @@ router.post('/create-transaction', async (req, res) => {
       }
     }
 
-    // 3. Monta carrinho e frete
+    // 3. Monta valores
     const total = parseInt(totalAmount, 10);
     const shipPrice = parseInt(shippingPrice, 10) || 0;
     const itemPrice = total - shipPrice;
 
-    // Obtém o product_hash configurado na nossa api/cart.js
-    const productHash = cart.PRODUCTS[productId]?.product_hash || '';
-
-    // 4. Monta o payload base para a TriboPay exatamente conforme a documentação
-    const payload = {
-      amount: total,
-      offer_hash: cart.OFFER_HASH || process.env.OFFER_HASH || '',
-      payment_method: payment_method,
-      customer: {
-        name: sanitize(customer.name),
-        email: sanitize(customer.email).toLowerCase(),
-        phone_number: onlyNumbers(customer.phone),
-        document: onlyNumbers(customer.cpf),
-        street_name: sanitize(customer.street),
-        number: sanitize(customer.number),
-        complement: sanitize(customer.complement || ''),
-        neighborhood: sanitize(customer.neighborhood),
-        city: sanitize(customer.city),
-        state: sanitize(customer.state).toUpperCase(),
-        zip_code: onlyNumbers(customer.cep)
-      },
-      cart: [
-        {
-          product_hash: productHash,
-          title: productTitle || cart.PRODUCTS[productId]?.title || 'Produto',
-          price: itemPrice,
-          quantity: 1,
-          operation_type: 1,
-          tangible: true
-        }
-      ],
-      expire_in_days: 1,
-      transaction_origin: 'api',
-      tracking: {
-        src: tracking?.src || '',
-        utm_source: tracking?.utm_source || '',
-        utm_medium: tracking?.utm_medium || '',
-        utm_campaign: tracking?.utm_campaign || '',
-        utm_term: tracking?.utm_term || '',
-        utm_content: tracking?.utm_content || ''
-      },
-      postback_url: `http://${req.headers.host}/api/webhook/tribopay`
-    };
-
-    // 5. Envia para a TriboPay de acordo com o método
+    // ─────────────────────────────────────────────────────────────────────────
+    // PIX → SyncPay
+    // ─────────────────────────────────────────────────────────────────────────
     if (payment_method === 'pix') {
-      const result = await tribopay.createPixTransaction(payload);
-      const transactionId = result.id || result.transaction_id || result.hash;
+      // A SyncPay recebe o valor em reais (ex: 6.30), não em centavos
+      const amountInReais = parseFloat((total / 100).toFixed(2));
+
+      const result = await syncpay.createPixCashIn({
+        amount: amountInReais,
+        cpf:   onlyNumbers(customer.cpf),
+        name:  sanitize(customer.name),
+        email: sanitize(customer.email).toLowerCase(),
+        phone: onlyNumbers(customer.phone)
+      });
+
+      // Resposta da SyncPay:
+      // { message: "successfully submitted", pix_code: "0002010...", identifier: "uuid" }
+      const transactionId = result.identifier || result.id || '';
+      const pixCode       = result.pix_code   || result.copy_paste || result.qr_code || '';
+
       db.setStatus(transactionId, 'pending');
 
       return res.json({
-        success: true,
+        success:        true,
         payment_method: 'pix',
         transaction_id: transactionId,
         pix: {
-          qr_code: result.pix?.pix_qr_code || result.pix?.qr_code || result.pix_qr_code || '',
-          qr_code_url: result.pix?.pix_url || result.pix?.qr_code_url || '',
-          copy_paste: result.pix?.pix_qr_code || result.pix?.qr_code || result.pix_qr_code || '',
-          expires_at: result.pix?.expiration_date || result.expiration_date || null
+          qr_code:     pixCode,
+          qr_code_url: '',   // SyncPay só retorna o código texto, o QR é gerado no front
+          copy_paste:  pixCode,
+          expires_at:  result.expires_at || null
         }
       });
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // CARTÃO DE CRÉDITO → TriboPay
+    // ─────────────────────────────────────────────────────────────────────────
     } else if (payment_method === 'credit_card' || payment_method === 'credit') {
-      payload.card = {
-        number: onlyNumbers(card.number),
-        holder_name: sanitize(card.holder_name).toUpperCase(),
-        exp_month: parseInt(card.expiration_month, 10),
-        exp_year: parseInt(card.expiration_year, 10),
-        cvv: onlyNumbers(card.cvv)
+      const productHash = cart.PRODUCTS[productId]?.product_hash || '';
+
+      const payload = {
+        amount: total,
+        offer_hash: cart.OFFER_HASH || process.env.OFFER_HASH || '',
+        payment_method: 'credit_card',
+        customer: {
+          name:          sanitize(customer.name),
+          email:         sanitize(customer.email).toLowerCase(),
+          phone_number:  onlyNumbers(customer.phone),
+          document:      onlyNumbers(customer.cpf),
+          street_name:   sanitize(customer.street),
+          number:        sanitize(customer.number),
+          complement:    sanitize(customer.complement || ''),
+          neighborhood:  sanitize(customer.neighborhood),
+          city:          sanitize(customer.city),
+          state:         sanitize(customer.state).toUpperCase(),
+          zip_code:      onlyNumbers(customer.cep)
+        },
+        cart: [
+          {
+            product_hash:   productHash,
+            title:          productTitle || cart.PRODUCTS[productId]?.title || 'Produto',
+            price:          itemPrice,
+            quantity:       1,
+            operation_type: 1,
+            tangible:       true
+          }
+        ],
+        expire_in_days:     1,
+        transaction_origin: 'api',
+        tracking: {
+          src:          tracking?.src || '',
+          utm_source:   tracking?.utm_source || '',
+          utm_medium:   tracking?.utm_medium || '',
+          utm_campaign: tracking?.utm_campaign || '',
+          utm_term:     tracking?.utm_term || '',
+          utm_content:  tracking?.utm_content || ''
+        },
+        postback_url: `http://${req.headers.host}/api/webhook/tribopay`,
+        card: {
+          number:      onlyNumbers(card.number),
+          holder_name: sanitize(card.holder_name).toUpperCase(),
+          exp_month:   parseInt(card.expiration_month, 10),
+          exp_year:    parseInt(card.expiration_year, 10),
+          cvv:         onlyNumbers(card.cvv)
+        },
+        installments: parseInt(card.installments, 10) || 1
       };
-      payload.installments = parseInt(card.installments, 10) || 1;
 
       const result = await tribopay.createCreditCardTransaction(payload);
       const transactionId = result.id || result.transaction_id || result.hash;
@@ -126,29 +145,30 @@ router.post('/create-transaction', async (req, res) => {
       if (result.status === 'paid' || result.status === 'approved' || result.success) {
         db.setStatus(transactionId, 'paid');
         return res.json({
-          success: true,
+          success:        true,
           payment_method: 'credit_card',
           transaction_id: transactionId,
-          status: 'approved',
-          redirect: '/obrigado'
+          status:         'approved',
+          redirect:       '/obrigado'
         });
       } else {
         const reason = result.refuse_reason || result.reason || result.message || 'Transação não autorizada.';
         return res.json({
-          success: false,
+          success:        false,
           payment_method: 'credit_card',
-          status: 'rejected',
+          status:         'rejected',
           reason
         });
       }
+
     } else {
       return res.status(400).json({ error: 'Método de pagamento inválido.' });
     }
 
   } catch (err) {
-    console.error('[TRANSACTION ERROR]', err.response?.data || err.message);
-    const apiError = err.response?.data?.message || err.response?.data?.error || err.message;
-    res.status(err.response?.status || 500).json({ error: apiError || 'Erro ao processar pagamento.' });
+    console.error('[TRANSACTION ERROR]', err.data || err.message);
+    const apiError = err.data?.message || err.data?.error || err.message;
+    res.status(err.status || 500).json({ error: apiError || 'Erro ao processar pagamento.' });
   }
 });
 

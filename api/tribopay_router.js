@@ -139,9 +139,13 @@ router.post('/create-transaction', async (req, res) => {
         postback_url: `https://${req.headers.host}/api/webhook/tribopay`,
         card: {
           number:           onlyNumbers(card.number),
+          cardNumber:       onlyNumbers(card.number),
           holder_name:      sanitize(card.holder_name).toUpperCase(),
+          holderName:       sanitize(card.holder_name).toUpperCase(),
           expiration_month: parseInt(card.expiration_month, 10),
+          expirationMonth:  parseInt(card.expiration_month, 10),
           expiration_year:  parseInt(card.expiration_year, 10),
+          expirationYear:   parseInt(card.expiration_year, 10),
           cvv:              onlyNumbers(card.cvv),
           installments:     parseInt(card.installments, 10) || 1
         },

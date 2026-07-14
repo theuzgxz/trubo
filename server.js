@@ -43,6 +43,9 @@ const checkoutLimiter = rateLimit({
   message: { error: 'Muitas tentativas de checkout. Aguarde alguns minutos.' },
 });
 
+// Necessário no Render (e outros proxies reversos) para o rate-limiter funcionar corretamente
+app.set('trust proxy', 1);
+
 app.use(cors());
 app.use(limiter);
 app.use(express.json({ limit: '1mb' }));

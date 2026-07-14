@@ -1809,7 +1809,9 @@
         }
       } catch (err) {
         document.getElementById('loading-overlay').style.display = 'none';
-        showGlobalError(err.message || "Erro de conexão.");
+        const errMsg = err.message || "Erro de conexão.";
+        showGlobalError("Erro: " + errMsg);
+        console.error('[CC ERROR DETAIL]', errMsg);
       }
     }
 

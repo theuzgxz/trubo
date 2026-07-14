@@ -11,7 +11,7 @@ const rateLimit  = require('express-rate-limit');
 const path       = require('path');
 
 const webhookRouter  = require('./api/webhook');
-const tribopayRouter = require('./api/tribopay_router');
+const hyzepayRouter  = require('./api/hyzepay_router');
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -63,8 +63,9 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Rotas da API
-app.use('/api/webhook/tribopay', webhookRouter);
-app.use('/api/tribopay',         checkoutLimiter, tribopayRouter);
+app.use('/api/webhook',          webhookRouter);
+app.use('/api/tribopay',         checkoutLimiter, hyzepayRouter); // Alias para compatibilidade do front-end na Netlify
+app.use('/api/hyzepay',          checkoutLimiter, hyzepayRouter);
 
 // Rota para consulta de parcelas e status (simplificada no roteador de checkout)
 app.use('/api/checkout', checkoutLimiter, require('./api/checkout_fallback'));

@@ -58,30 +58,17 @@ router.get('/status/:id', async (req, res) => {
     return res.json({ status: 'paid' });
   }
 
-  const provider = tx ? tx.provider : 'tribopay';
-
   try {
     let isApproved = false;
 
-    if (provider === 'syncpay') {
-      const syncpay = require('./syncpay');
-      const result = await syncpay.consultTransaction(id);
-      if (result && result.data) {
-        if (result.data.status === 'completed') {
-          isApproved = true;
-          status = 'paid';
-        } else {
-          status = result.data.status;
-        }
-      }
-    } else {
-      const tribopay = require('./tribopay');
-      const result = await tribopay.consultTransaction(id);
-      if (result && (result.status === 'paid' || result.status === 'approved')) {
+    const hyzepay = require('./hyzepay');
+    const result = await hyzepay.consultTransaction(id);
+    if (result && result.success && result.data) {
+      if (result.data.status === 'PAID') {
         isApproved = true;
         status = 'paid';
-      } else if (result && result.status) {
-        status = result.status;
+      } else {
+        status = result.data.status.toLowerCase();
       }
     }
 
@@ -99,7 +86,7 @@ router.get('/status/:id', async (req, res) => {
       }
     }
   } catch (err) {
-    console.error(`[STATUS CHECK ERROR] [${provider}]`, err.message);
+    console.error(`[STATUS CHECK ERROR] [hyzepay]`, err.message);
   }
 
   res.json({ status });

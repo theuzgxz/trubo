@@ -11,6 +11,7 @@ const syncpay = require('./syncpay');
 const cart = require('./cart');
 const db = require('./db');
 const { validateCPF, validateEmail, validatePhone, onlyNumbers, sanitize } = require('./utils');
+const { sendConfirmationEmail } = require('./email');
 
 router.post('/create-transaction', async (req, res) => {
   try {
@@ -71,7 +72,14 @@ router.post('/create-transaction', async (req, res) => {
       const transactionId = result.identifier || result.id || '';
       const pixCode       = result.pix_code   || result.copy_paste || result.qr_code || '';
 
-      db.setStatus(transactionId, 'pending');
+      db.setTransaction(transactionId, {
+        status: 'pending',
+        provider: 'syncpay',
+        customerName: sanitize(customer.name),
+        customerEmail: sanitize(customer.email).toLowerCase(),
+        amount: total,
+        paymentMethod: 'pix'
+      });
 
       return res.json({
         success:        true,
@@ -142,8 +150,25 @@ router.post('/create-transaction', async (req, res) => {
       const result = await tribopay.createCreditCardTransaction(payload);
       const transactionId = result.id || result.transaction_id || result.hash;
 
-      if (result.status === 'paid' || result.status === 'approved' || result.success) {
-        db.setStatus(transactionId, 'paid');
+      const isApproved = (result.status === 'paid' || result.status === 'approved' || result.success);
+      db.setTransaction(transactionId, {
+        status: isApproved ? 'paid' : 'pending',
+        provider: 'tribopay',
+        customerName: sanitize(customer.name),
+        customerEmail: sanitize(customer.email).toLowerCase(),
+        amount: total,
+        paymentMethod: 'credit_card'
+      });
+
+      if (isApproved) {
+        // Envia e-mail de confirmação de forma assíncrona
+        sendConfirmationEmail(
+          sanitize(customer.email).toLowerCase(),
+          sanitize(customer.name),
+          transactionId,
+          total
+        ).catch(err => console.error('[CC EMAIL ERROR]', err));
+
         return res.json({
           success:        true,
           payment_method: 'credit_card',

@@ -5,11 +5,22 @@
 const transactions = {};
 
 module.exports = {
-  setStatus: (id, status) => {
+  setTransaction: (id, data) => {
     transactions[String(id)] = {
-      status,
+      ...transactions[String(id)],
+      ...data,
       updatedAt: new Date()
     };
+  },
+  getTransaction: (id) => {
+    return transactions[String(id)];
+  },
+  setStatus: (id, status) => {
+    if (!transactions[String(id)]) {
+      transactions[String(id)] = {};
+    }
+    transactions[String(id)].status = status;
+    transactions[String(id)].updatedAt = new Date();
   },
   getStatus: (id) => {
     return transactions[String(id)] ? transactions[String(id)].status : 'pending';

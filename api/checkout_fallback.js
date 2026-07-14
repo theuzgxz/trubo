@@ -6,6 +6,7 @@ const express = require('express');
 const router = express.Router();
 const cart = require('./cart');
 const db = require('./db');
+const { sendConfirmationEmail } = require('./email');
 
 // GET /api/checkout/products
 router.get('/products', (req, res) => {
@@ -50,23 +51,55 @@ router.get('/installments', (req, res) => {
 // GET /api/checkout/status/:id
 router.get('/status/:id', async (req, res) => {
   const id = req.params.id;
-  let status = db.getStatus(id);
+  const tx = db.getTransaction(id);
+  let status = tx ? tx.status : 'pending';
 
   if (status === 'paid' || status === 'approved') {
     return res.json({ status: 'paid' });
   }
 
+  const provider = tx ? tx.provider : 'tribopay';
+
   try {
-    const tribopay = require('./tribopay');
-    const result = await tribopay.consultTransaction(id);
-    if (result && (result.status === 'paid' || result.status === 'approved')) {
+    let isApproved = false;
+
+    if (provider === 'syncpay') {
+      const syncpay = require('./syncpay');
+      const result = await syncpay.consultTransaction(id);
+      if (result && result.data) {
+        if (result.data.status === 'completed') {
+          isApproved = true;
+          status = 'paid';
+        } else {
+          status = result.data.status;
+        }
+      }
+    } else {
+      const tribopay = require('./tribopay');
+      const result = await tribopay.consultTransaction(id);
+      if (result && (result.status === 'paid' || result.status === 'approved')) {
+        isApproved = true;
+        status = 'paid';
+      } else if (result && result.status) {
+        status = result.status;
+      }
+    }
+
+    if (isApproved) {
       db.setStatus(id, 'paid');
-      status = 'paid';
-    } else if (result && result.status) {
-      status = result.status;
+      
+      // Envia e-mail de confirmação caso tenhamos os dados do cliente e o status anterior não fosse pago
+      if (tx && tx.status !== 'paid') {
+        sendConfirmationEmail(
+          tx.customerEmail || '',
+          tx.customerName || '',
+          id,
+          tx.amount || 6790
+        ).catch(err => console.error('[POLLING EMAIL ERROR]', err));
+      }
     }
   } catch (err) {
-    console.error('[STATUS FALLBACK ERROR]', err.message);
+    console.error(`[STATUS CHECK ERROR] [${provider}]`, err.message);
   }
 
   res.json({ status });

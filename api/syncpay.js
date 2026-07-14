@@ -123,6 +123,6 @@ module.exports = {
    */
   consultTransaction: async (identifier) => {
     const token = await getAccessToken();
-    return await request('GET', `/api/partner/v1/transactions/${identifier}`, null, token);
+    return await request('GET', `/api/partner/v1/transaction/${identifier}`, null, token);
   }
 };

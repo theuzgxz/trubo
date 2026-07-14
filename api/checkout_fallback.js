@@ -105,4 +105,29 @@ router.get('/status/:id', async (req, res) => {
   res.json({ status });
 });
 
+// GET /api/checkout/test-email
+router.get('/test-email', async (req, res) => {
+  const email = req.query.email;
+  if (!email) {
+    return res.status(400).json({ error: 'Envie o e-mail via parâmetro: ?email=seu-email@gmail.com' });
+  }
+
+  try {
+    const success = await sendConfirmationEmail(
+      email,
+      'Cliente de Teste',
+      'TEST-12345',
+      700
+    );
+
+    if (success) {
+      res.json({ success: true, message: `E-mail de teste enviado para ${email}. Verifique sua caixa de entrada!` });
+    } else {
+      res.status(500).json({ success: false, error: 'O envio falhou. Verifique se as variáveis SMTP estão corretas nos logs do Render.' });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;

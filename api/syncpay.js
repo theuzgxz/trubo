@@ -14,7 +14,7 @@
 
 const https = require('https');
 
-const SYNCPAY_HOST = 'api.syncpay.com.br';
+const SYNCPAY_HOST = 'api.syncpayments.com.br';
 
 // Faz uma requisição HTTPS genérica e retorna uma Promise com os dados JSON
 function request(method, path, body, token) {

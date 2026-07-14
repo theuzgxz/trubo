@@ -136,7 +136,7 @@ router.post('/create-transaction', async (req, res) => {
           utm_term:     tracking?.utm_term || '',
           utm_content:  tracking?.utm_content || ''
         },
-        postback_url: `http://${req.headers.host}/api/webhook/tribopay`,
+        postback_url: `https://${req.headers.host}/api/webhook/tribopay`,
         card: {
           number:      onlyNumbers(card.number),
           holder_name: sanitize(card.holder_name).toUpperCase(),
@@ -191,9 +191,11 @@ router.post('/create-transaction', async (req, res) => {
     }
 
   } catch (err) {
-    console.error('[TRANSACTION ERROR]', err.data || err.message);
-    const apiError = err.data?.message || err.data?.error || err.message;
-    res.status(err.status || 500).json({ error: apiError || 'Erro ao processar pagamento.' });
+    const responseData = err.response?.data;
+    const statusCode = err.response?.status;
+    console.error('[TRANSACTION ERROR]', statusCode, JSON.stringify(responseData) || err.message);
+    const apiError = responseData?.message || responseData?.error || err.message;
+    res.status(statusCode || 500).json({ error: apiError || 'Erro ao processar pagamento.', detail: responseData });
   }
 });
 

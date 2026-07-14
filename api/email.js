@@ -25,6 +25,9 @@ function getTransporter() {
       user,
       pass
     },
+    connectionTimeout: 8000, // 8 segundos
+    greetingTimeout: 8000,
+    socketTimeout: 10000,
     tls: {
       rejectUnauthorized: false // Evita erros de certificados inválidos ou auto-assinados de alguns provedores
     }
@@ -38,10 +41,13 @@ function getTransporter() {
  * @param {string} orderId - ID da transação
  * @param {number} amountCents - Valor em centavos (ex: 700 para R$ 7,00)
  */
-async function sendConfirmationEmail(email, name, orderId, amountCents) {
+async function sendConfirmationEmail(email, name, orderId, amountCents, throwError = false) {
   try {
     const transporter = getTransporter();
-    if (!transporter) return false;
+    if (!transporter) {
+      if (throwError) throw new Error("Configurações SMTP não encontradas (EMAIL_HOST, EMAIL_USER, EMAIL_PASS).");
+      return false;
+    }
 
     const formattedAmount = (amountCents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     const from = process.env.EMAIL_FROM || '"Dream Sleep" <contato@dreamsleep.com>';
@@ -131,6 +137,7 @@ async function sendConfirmationEmail(email, name, orderId, amountCents) {
     return true;
   } catch (error) {
     console.error('[EMAIL ERROR] Falha ao enviar e-mail de confirmação:', error.message);
+    if (throwError) throw error;
     return false;
   }
 }

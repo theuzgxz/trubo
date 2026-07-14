@@ -117,7 +117,8 @@ router.get('/test-email', async (req, res) => {
       email,
       'Cliente de Teste',
       'TEST-12345',
-      700
+      700,
+      true
     );
 
     if (success) {

@@ -845,7 +845,7 @@
         <div class="step-content">
           <div style="display: flex; align-items: center; gap: 10px; font-size: 0.88rem; color: #4a5568; margin-bottom: 1.25rem; text-align: left; font-weight: 600; font-family: 'Inter', sans-serif;">
             <span>Compra processada por</span>
-            <img src="/mercado-pago.png" style="height: 42px; vertical-align: middle; mix-blend-mode: multiply; display: inline-block;" alt="Mercado Pago">
+            <img src="/mercado-pago.png" style="height: 54px; vertical-align: middle; mix-blend-mode: multiply; display: inline-block;" alt="Mercado Pago">
           </div>
 
           <!-- Opção Cartão de Crédito -->
@@ -1058,7 +1058,7 @@
 
         <!-- QR Code -->
         <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; background-color: #ffffff; width: 220px; height: 220px; display: flex; align-items: center; justify-content: center; margin: 10px 0;">
-          <img id="pix-page-qr-img" src="" style="width: 100%; height: 100%;" alt="Pix QR Code">
+          <img id="pix-page-qr-img" src="" onerror="if(this.src.indexOf('qrserver')===-1) this.src='https://api.qrserver.com/v1/create-qr-code/?size=250x250&data='+encodeURIComponent(document.getElementById('pix-page-copy-input').value);" style="width: 100%; height: 100%;" alt="Pix QR Code">
         </div>
 
         <div style="font-size: 1.25rem; font-weight: 700; color: #00a650; margin: 10px 0;" id="pix-page-amount">
@@ -1067,7 +1067,7 @@
 
         <div style="display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 0.88rem; color: #4a5568; margin-top: 10px; font-weight: 600; font-family: 'Inter', sans-serif;">
           <span>Compra processada por</span>
-          <img src="/mercado-pago.png" style="height: 42px; vertical-align: middle; mix-blend-mode: multiply; display: inline-block;" alt="Mercado Pago">
+          <img src="/mercado-pago.png" style="height: 54px; vertical-align: middle; mix-blend-mode: multiply; display: inline-block;" alt="Mercado Pago">
         </div>
       </div>
     </div>
@@ -1095,7 +1095,7 @@
 
     const state = {
       products: [
-        { id: '48', price: 6790, title: 'Patch Sleep - 1 Pacote 48 Adesivos' },
+        { id: '48', price: 500, title: 'Patch Sleep - 1 Pacote 48 Adesivos' },
         { id: '96', price: 11560, title: 'Patch Sleep - 2 Pacotes 96 Adesivos' },
         { id: '144', price: 15200, title: 'Patch Sleep - 3 Pacotes 144 Adesivos' }
       ],
@@ -1818,17 +1818,32 @@
     let pollInterval = null;
 
     function openPixModal(pixData, transactionId, amountCents) {
-      // Use Pix copia e cola code, or fallback to a dummy code if the gateway does not return one (e.g. in sandbox)
       const pixCode = pixData.copy_paste || '00020126580014br.gov.bcb.pix0136VZR2eRTtmOCDGbGmNEi2qsDGSyV6dgry1ipXutqGGqo30H8bc2HLtN3wNjXW5204000053039865406100.005802BR5908SleepKit6009Sao Paulo62070503***63041234';
       
-      let qrUrl = pixData.qr_code_url;
-      if (!qrUrl) {
-        // Dynamic Google Charts QR code generator (highly reliable, never blocked)
-        qrUrl = `https://chart.googleapis.com/chart?cht=qr&chs=250x250&chld=L|1&chl=${encodeURIComponent(pixCode)}`;
-      }
-
-      document.getElementById('pix-page-qr-img').src = qrUrl;
       document.getElementById('pix-page-copy-input').value = pixCode;
+
+      const qrImg = document.getElementById('pix-page-qr-img');
+      
+      // Lista de APIs públicas de QR Code para tentar sequencialmente caso alguma falhe ou seja bloqueada
+      const qrApis = [
+        `https://chart.googleapis.com/chart?cht=qr&chs=250x250&chld=L|1&chl=${encodeURIComponent(pixCode)}`,
+        `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(pixCode)}`,
+        `https://quickchart.io/qr?size=250&text=${encodeURIComponent(pixCode)}`
+      ];
+
+      let currentApiIndex = 0;
+      
+      qrImg.onerror = function() {
+        currentApiIndex++;
+        if (currentApiIndex < qrApis.length) {
+          console.warn("Falha ao carregar QR Code da API atual. Tentando alternativa: " + currentApiIndex);
+          qrImg.src = qrApis[currentApiIndex];
+        } else {
+          console.error("Todas as APIs de QR Code falharam.");
+        }
+      };
+
+      qrImg.src = pixData.qr_code_url || qrApis[0];
       
       const formattedAmount = (amountCents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
       document.getElementById('pix-page-amount').textContent = `Valor do Pix: ${formattedAmount}`;

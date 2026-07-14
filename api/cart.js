@@ -8,7 +8,7 @@ module.exports = {
     '48': {
       id: '48',
       title: '48 adesivos (1 pacote)',
-      price: 6790,
+      price: 500,
       product_hash: process.env.OFFER_HASH || 'c4amzxuvt8'
     },
     '96': {

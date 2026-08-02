@@ -3,7 +3,7 @@
 
 [[redirects]]
   from = "/api/*"
-  to = "https://dream-sleep-api.onrender.com/api/:splat"
+  to = "https://dream-sleep.onrender.com/api/:splat"
   status = 200
   force = true
 

@@ -10,8 +10,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Mercado Pago Credentials
-const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || 'APP_USR-6893881873091133-080212-c6aee6f94a2e65b92e0612b7f4befe75-3583804798';
-const PUBLIC_KEY = process.env.MP_PUBLIC_KEY || 'APP_USR-5aa13fee-9d0c-47bc-8216-45239ba8b106';
+const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || 'APP_USR-6971823939959675-080212-4f37a2015e0947f12085a3e3dc68aa97-367751174';
+const PUBLIC_KEY = process.env.MP_PUBLIC_KEY || 'APP_USR-b9f77569-c92c-4d8c-91b8-974bd5e3cfec';
 
 app.use(cors());
 app.use(express.json());
@@ -91,40 +91,19 @@ app.post('/api/process-payment', async (req, res) => {
 
     if (!mpResponse.ok) {
       console.error('[MercadoPago API Error]', data);
-      
-      // Handle Unauthorized live credentials (needs account activation in MP dashboard) or test card simulation
-      const isUnauthorized = data.message?.includes('Unauthorized') || data.cause?.[0]?.code === 7;
-      const isTestCard = token || ['5480', '4235', '3753', '5067'].some(prefix => body.payment_method_id?.includes(prefix));
 
-      if (isUnauthorized || isTestCard) {
-        console.warn('[MercadoPago Integration] Response handled in test mode for active credentials validation.');
-        
-        if (payment_method_id === 'pix') {
-          const mockQrCode = '00020126580014BR.GOV.BCB.PIX0136123e4567-e89b-12d3-a456-426614174000520400005303986540598.105802BR5911Dream Sleep6009SAO PAULO62070503***6304E2CA';
-          return res.json({
-            success: true,
-            payment_id: `DS-PIX-${Date.now().toString().slice(-6)}`,
-            status: 'pending',
-            payment_method: 'pix',
-            qr_code: mockQrCode,
-            qr_code_base64: Buffer.from(mockQrCode).toString('base64'),
-            note: 'Pix gerado com sucesso.'
-          });
-        } else {
-          return res.json({
-            success: true,
-            payment_id: `DS-CARD-${Date.now().toString().slice(-6)}`,
-            status: 'approved',
-            status_detail: 'accredited',
-            payment_method: payment_method_id,
-            note: 'Pagamento com Cartão Aprovado!'
-          });
-        }
+      let userErrorMessage = data.message || 'Erro ao processar pagamento com o Mercado Pago';
+
+      // Check if error is due to unactivated live credentials (code 7)
+      if (data.message?.includes('Unauthorized') || data.cause?.[0]?.code === 7) {
+        userErrorMessage = 'As credenciais de produção (APP_USR-) precisam ter a conta ativada no painel do Mercado Pago para processar cobranças reais. Para realizar testes, utilize as Credenciais de Teste (TEST-).';
+      } else if (data.cause && data.cause.length > 0) {
+        userErrorMessage = data.cause.map(c => c.description || c.code).join(' | ');
       }
 
       return res.status(mpResponse.status).json({
         success: false,
-        error: data.message || 'Erro ao processar pagamento com o Mercado Pago',
+        error: userErrorMessage,
         details: data.cause || data
       });
     }

@@ -1,3 +1,2 @@
-# Netlify Proxy Redirects for Backend (Render / Vercel)
-# Replace https://dream-sleep-api.onrender.com with your actual Render API URL after creating your Web Service on Render!
-/api/*  https://dream-sleep-api.onrender.com/api/:splat  200
+# Netlify Proxy Redirects for Backend (Render)
+/api/*  https://dream-sleep.onrender.com/api/:splat  200

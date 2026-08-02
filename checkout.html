@@ -1228,6 +1228,7 @@
     let selectedPayment = 'pix'; // Default Pix per Image 2!
     let statusPollInterval = null;
     let pixTimerSeconds = 28 * 60 + 25; // 28:25 Timer (Image 4)
+    let mpInstance = null;
 
     window.addEventListener('DOMContentLoaded', () => {
       const params = new URLSearchParams(window.location.search);
@@ -1236,6 +1237,17 @@
         selectedPackage = PACKAGES[packId];
       }
       updateSidebarSummary();
+
+      // Initialize Mercado Pago
+      const baseUrl = window.API_BASE_URL || '';
+      fetch(`${baseUrl}/api/config`)
+        .then(res => res.json())
+        .then(data => {
+          if(data.publicKey) {
+            mpInstance = new MercadoPago(data.publicKey, { locale: 'pt-BR' });
+          }
+        })
+        .catch(err => console.error('Error fetching MP config:', err));
     });
 
     // REAL BRAZILIAN CPF VALIDATION ALGORITHM
@@ -1730,6 +1742,11 @@
 
     // Mercado Pago Payment Processor for Credit Card
     async function processCardPayment() {
+      if (!mpInstance) {
+        alert('Erro de conexão com o meio de pagamento. Por favor, recarregue a página.');
+        return;
+      }
+
       const num = document.getElementById('card-num').value.replace(/\s/g, '');
       const holder = document.getElementById('card-holder').value;
       const expiry = document.getElementById('card-expiry').value;
@@ -1744,22 +1761,41 @@
       const overlay = document.getElementById('full-loading-overlay');
       overlay.style.display = 'flex';
 
-      let total = Number((selectedPackage.price + (selectedShipping === 'transp' ? 14.90 : 0.00)).toFixed(2));
-
-      const payload = {
-        transaction_amount: total,
-        payment_method_id: /^4/.test(num) ? 'visa' : 'master',
-        description: selectedPackage.title,
-        installments: document.getElementById('card-installments').value || '1',
-        payer: {
-          name: holder,
-          email: document.getElementById('cust-email').value,
-          identification: { type: 'CPF', number: document.getElementById('card-cpf').value.replace(/\D/g, '') || document.getElementById('cust-cpf').value.replace(/\D/g, '') },
-          phone: document.getElementById('cust-phone').value.replace(/\D/g, '')
-        }
-      };
-
       try {
+        const expParts = expiry.split('/');
+        const expMonth = expParts[0];
+        const expYear = expParts[1].length === 2 ? '20' + expParts[1] : expParts[1];
+        
+        const cardToken = await mpInstance.createCardToken({
+          cardNumber: num,
+          cardholderName: holder,
+          cardExpirationMonth: expMonth,
+          cardExpirationYear: expYear,
+          securityCode: cvv,
+          identificationType: 'CPF',
+          identificationNumber: document.getElementById('card-cpf').value.replace(/\D/g, '') || document.getElementById('cust-cpf').value.replace(/\D/g, '')
+        });
+
+        if (!cardToken || !cardToken.id) {
+          throw new Error('Falha ao gerar token de segurança.');
+        }
+
+        let total = Number((selectedPackage.price + (selectedShipping === 'transp' ? 14.90 : 0.00)).toFixed(2));
+
+        const payload = {
+          transaction_amount: total,
+          payment_method_id: /^4/.test(num) ? 'visa' : 'master',
+          description: selectedPackage.title,
+          installments: document.getElementById('card-installments').value || '1',
+          token: cardToken.id,
+          payer: {
+            name: holder,
+            email: document.getElementById('cust-email').value,
+            identification: { type: 'CPF', number: document.getElementById('card-cpf').value.replace(/\D/g, '') || document.getElementById('cust-cpf').value.replace(/\D/g, '') },
+            phone: document.getElementById('cust-phone').value.replace(/\D/g, '')
+          }
+        };
+
         const baseUrl = window.API_BASE_URL || '';
         const res = await fetch(`${baseUrl}/api/process-payment`, {
           method: 'POST',

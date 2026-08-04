@@ -31,6 +31,8 @@
   src="https://www.facebook.com/tr?id=1768642664315867&ev=PageView&noscript=1"/>
   </noscript>
   <!-- End Meta Pixel Code -->
+  <!-- Meta Pixel Centralizado -->
+  <script defer src="meta-pixel.js"></script>
   
   <!-- Fonts & Remix Icon -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1288,15 +1290,6 @@
     let pixTimerSeconds = 28 * 60 + 25; // 28:25 Timer (Image 4)
     let mpInstance = null;
 
-    // Meta Pixel TrackOnce Helper
-    function trackOnce(key, eventName, parameters = {}) {
-      if (sessionStorage.getItem(key)) return;
-      if (typeof window.fbq === 'function') {
-        window.fbq('track', eventName, parameters);
-        sessionStorage.setItem(key, 'true');
-      }
-    }
-
     window.addEventListener('DOMContentLoaded', () => {
       const params = new URLSearchParams(window.location.search);
       const packId = params.get('pack') || '1';
@@ -1304,14 +1297,6 @@
         selectedPackage = PACKAGES[packId];
       }
       updateSidebarSummary();
-
-      // Track InitiateCheckout once per session
-      trackOnce('meta_initiate_checkout', 'InitiateCheckout', {
-        content_name: selectedPackage.title,
-        content_type: 'product',
-        currency: 'BRL',
-        value: selectedPackage.price
-      });
 
       // Initialize Mercado Pago
       const baseUrl = window.API_BASE_URL || '';
@@ -1533,12 +1518,10 @@
       let discount = (selectedPayment === 'pix') ? Number((subtotal * 0.10).toFixed(2)) : 0.00;
       let total = Number((subtotal + shippingCost - discount).toFixed(2));
 
-      trackOnce('meta_add_payment_info', 'AddPaymentInfo', {
-        content_name: selectedPackage.title,
-        content_type: 'product',
-        currency: 'BRL',
-        value: total
-      });
+      if (typeof window.trackAddPaymentInfo === 'function') {
+        const pId = new URLSearchParams(window.location.search).get('pack') || '1';
+        window.trackAddPaymentInfo(pId, selectedPackage.title, total);
+      }
 
       const btn = document.querySelector('#form-step-1 .btn-step');
       const originalText = btn.innerText;
@@ -1900,12 +1883,10 @@
             document.getElementById('success-result-box').style.display = 'block';
             document.getElementById('pay-form-card').style.display = 'none';
 
-            trackOnce('meta_purchase_' + (data.payment_id || Date.now()), 'Purchase', {
-              content_name: selectedPackage.title,
-              content_type: 'product',
-              currency: 'BRL',
-              value: total
-            });
+            if (typeof window.trackPurchase === 'function') {
+              const pId = new URLSearchParams(window.location.search).get('pack') || '1';
+              window.trackPurchase(data.payment_id, total, pId, selectedPackage.title);
+            }
           } else if (data.success && (data.status === 'in_process' || data.status === 'pending')) {
             document.getElementById('success-result-box').style.display = 'block';
             document.getElementById('pay-form-card').style.display = 'none';
@@ -1951,12 +1932,10 @@
             let shippingCost = (selectedShipping === 'transp') ? 14.90 : 0.00;
             let total = Number(((subtotal * 0.90) + shippingCost).toFixed(2));
 
-            trackOnce('meta_purchase_' + id, 'Purchase', {
-              content_name: selectedPackage.title,
-              content_type: 'product',
-              currency: 'BRL',
-              value: total
-            });
+            if (typeof window.trackPurchase === 'function') {
+              const pId = new URLSearchParams(window.location.search).get('pack') || '1';
+              window.trackPurchase(id, total, pId, selectedPackage.title);
+            }
 
             alert('🎉 Pagamento PIX Confirmado!');
             window.location.reload();

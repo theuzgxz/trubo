@@ -69,15 +69,6 @@ function initMercadoPagoSDK() {
   }
 }
 
-// Meta Pixel TrackOnce Helper
-function trackOnce(key, eventName, parameters = {}) {
-  if (sessionStorage.getItem(key)) return;
-  if (typeof window.fbq === 'function') {
-    window.fbq('track', eventName, parameters);
-    sessionStorage.setItem(key, 'true');
-  }
-}
-
 // Redirect to Checkout Page matching Image 1
 function goToCheckout() {
   const selectedCard = document.querySelector('.price-card.selected');
@@ -85,12 +76,9 @@ function goToCheckout() {
   const packTitle = selectedCard ? (selectedCard.getAttribute('data-title') || 'Dream Sleep - Adesivo de Sono') : 'Dream Sleep - Adesivo de Sono';
   const packPrice = selectedCard ? (parseFloat(selectedCard.getAttribute('data-price')) || 109.00) : 109.00;
 
-  trackOnce('meta_initiate_checkout', 'InitiateCheckout', {
-    content_name: packTitle,
-    content_type: 'product',
-    currency: 'BRL',
-    value: packPrice
-  });
+  if (typeof window.trackInitiateCheckout === 'function') {
+    window.trackInitiateCheckout(packId, packTitle, packPrice);
+  }
 
   window.location.href = `checkout.html?pack=${packId}`;
 }
@@ -131,6 +119,10 @@ function proceedToPayment() {
   if (!form.checkValidity()) {
     form.reportValidity();
     return;
+  }
+
+  if (typeof window.trackAddPaymentInfo === 'function') {
+    window.trackAddPaymentInfo(currentOrder.pack, currentOrder.title, currentOrder.price);
   }
 
   const step1 = document.getElementById('mp-step-1');
@@ -318,9 +310,22 @@ async function submitCardPayment() {
     const result = await response.json();
 
     if (result.success && result.status === 'approved') {
-      showSuccessScreen(result);
+      showSuccessScreen({
+        status: result.status,
+        paymentId: result.payment_id,
+        amount: currentOrder.price,
+        productId: currentOrder.pack,
+        productTitle: currentOrder.title
+      });
     } else if (result.success && result.status === 'in_process') {
-      showSuccessScreen(result, 'Pagamento em análise pelo seu banco. Você receberá a confirmação em instantes.');
+      showSuccessScreen({
+        status: result.status,
+        paymentId: result.payment_id,
+        amount: currentOrder.price,
+        productId: currentOrder.pack,
+        productTitle: currentOrder.title,
+        customMsg: 'Pagamento em análise pelo seu banco. Você receberá a confirmação em instantes.'
+      });
     } else {
       showErrorScreen(result.error || 'Cartão recusado ou dados inválidos. Verifique e tente novamente.');
     }
@@ -376,7 +381,13 @@ function startStatusPolling(paymentId) {
       if (data.success && data.status === 'approved') {
         clearInterval(statusPollInterval);
         statusPollInterval = null;
-        showSuccessScreen(data);
+        showSuccessScreen({
+          status: data.status,
+          paymentId: paymentId,
+          amount: currentOrder.price,
+          productId: currentOrder.pack,
+          productTitle: currentOrder.title
+        });
       }
     } catch (e) {
       console.log('Polling status error', e);
@@ -385,7 +396,7 @@ function startStatusPolling(paymentId) {
 }
 
 // Show Success Screen
-function showSuccessScreen(result, customMsg) {
+function showSuccessScreen({ status, paymentId, amount, productId, productTitle, customMsg }) {
   document.getElementById('mp-checkout-form').style.display = 'none';
   const resultContainer = document.getElementById('mp-checkout-result');
   const pixBox = document.getElementById('mp-result-pix');
@@ -400,12 +411,21 @@ function showSuccessScreen(result, customMsg) {
   const infoBox = document.getElementById('mp-order-summary-box');
   if (infoBox) {
     infoBox.innerHTML = `
-      <strong>Código do Pedido:</strong> #${result.payment_id || 'DS-' + Date.now().toString().slice(-6)}<br>
-      <strong>Item:</strong> Dream Sleep - ${currentOrder.title}<br>
-      <strong>Valor Total:</strong> R$ ${currentOrder.price.toFixed(2).replace('.', ',')}<br>
+      <strong>Código do Pedido:</strong> #${paymentId || 'DS-' + Date.now().toString().slice(-6)}<br>
+      <strong>Item:</strong> Dream Sleep - ${productTitle || currentOrder.title}<br>
+      <strong>Valor Total:</strong> R$ ${(amount || currentOrder.price).toFixed(2).replace('.', ',')}<br>
       <strong>Status:</strong> Aprovado <i class="ri-checkbox-circle-line" style="color:#0dcc1c;"></i><br>
       <small style="display:block; margin-top:8px; color:#888;">${customMsg || 'Os detalhes do envio e o rastreio serão enviados para o seu e-mail.'}</small>
     `;
+  }
+
+  if (status !== 'approved' || !paymentId || !Number.isFinite(Number(amount))) {
+    console.warn('[Meta Pixel] Purchase bloqueado: pagamento não confirmado');
+    return;
+  }
+
+  if (typeof window.trackPurchase === 'function') {
+    window.trackPurchase(paymentId, amount, productId, productTitle);
   }
 }
 

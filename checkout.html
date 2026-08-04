@@ -4,6 +4,33 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Checkout Seguro | Dream Sleep</title>
+
+  <!-- Meta Pixel Code -->
+  <script>
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;
+  n.push=n;
+  n.loaded=!0;
+  n.version='2.0';
+  n.queue=[];
+  t=b.createElement(e);
+  t.async=!0;
+  t.src=v;
+  s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s);
+  }(window, document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+
+  fbq('init', '1768642664315867');
+  fbq('track', 'PageView');
+  </script>
+  <noscript>
+  <img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=1768642664315867&ev=PageView&noscript=1"/>
+  </noscript>
+  <!-- End Meta Pixel Code -->
   
   <!-- Fonts & Remix Icon -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -419,8 +446,9 @@
     }
     .card-logos {
       display: flex;
-      gap: 0.3rem;
-      margin-top: 0.3rem;
+      gap: 0.35rem;
+      align-items: center;
+      margin-top: 0.35rem;
       flex-wrap: wrap;
     }
     .card-logo-badge {
@@ -981,12 +1009,41 @@
                 <div>
                   <div class="payment-option-title">Cartão de crédito</div>
                   <div class="card-logos">
-                    <span class="card-logo-badge">AMEX</span>
-                    <span class="card-logo-badge">VISA</span>
-                    <span class="card-logo-badge">DINERS</span>
-                    <span class="card-logo-badge">MC</span>
-                    <span class="card-logo-badge">DISCOVER</span>
-                    <span class="card-logo-badge">AURA</span>
+                    <!-- Visa -->
+                    <svg width="38" height="24" viewBox="0 0 38 24" fill="none" xmlns="http://www.w3.org/2000/svg" title="Visa">
+                      <rect width="38" height="24" rx="4" fill="#ffffff" stroke="#e5e7eb"/>
+                      <text x="19" y="16.5" font-family="'Outfit', sans-serif" font-weight="900" font-style="italic" font-size="12.5" fill="#1434CB" text-anchor="middle" letter-spacing="0.5">VISA</text>
+                    </svg>
+                    <!-- Mastercard -->
+                    <svg width="38" height="24" viewBox="0 0 38 24" fill="none" xmlns="http://www.w3.org/2000/svg" title="Mastercard">
+                      <rect width="38" height="24" rx="4" fill="#ffffff" stroke="#e5e7eb"/>
+                      <circle cx="15" cy="12" r="6.5" fill="#EB001B"/>
+                      <circle cx="23" cy="12" r="6.5" fill="#F79E1B"/>
+                      <path d="M19 7.4C20.4 8.6 21.2 10.2 21.2 12C21.2 13.8 20.4 15.4 19 16.6C17.6 15.4 16.8 13.8 16.8 12C16.8 10.2 17.6 8.6 19 7.4Z" fill="#FF5F00"/>
+                    </svg>
+                    <!-- Elo -->
+                    <svg width="38" height="24" viewBox="0 0 38 24" fill="none" xmlns="http://www.w3.org/2000/svg" title="Elo">
+                      <rect width="38" height="24" rx="4" fill="#000000"/>
+                      <path d="M7 16V8H11.5V9.8H9.3V11H11.2V12.8H9.3V14.2H11.5V16H7Z" fill="#FF1744"/>
+                      <path d="M13 16V8H15.3V14.2H18V16H13Z" fill="#FFC107"/>
+                      <circle cx="22.5" cy="12" r="3.2" stroke="#00E5FF" stroke-width="2" fill="none"/>
+                    </svg>
+                    <!-- Hipercard -->
+                    <svg width="38" height="24" viewBox="0 0 38 24" fill="none" xmlns="http://www.w3.org/2000/svg" title="Hipercard">
+                      <rect width="38" height="24" rx="4" fill="#CC0000"/>
+                      <text x="19" y="15.5" font-family="'Outfit', sans-serif" font-weight="900" font-size="8.5" fill="#FFFFFF" text-anchor="middle" letter-spacing="-0.5">Hiper</text>
+                    </svg>
+                    <!-- Amex -->
+                    <svg width="38" height="24" viewBox="0 0 38 24" fill="none" xmlns="http://www.w3.org/2000/svg" title="American Express">
+                      <rect width="38" height="24" rx="4" fill="#0077A6"/>
+                      <text x="19" y="15.5" font-family="'Outfit', sans-serif" font-weight="800" font-size="8" fill="#FFFFFF" text-anchor="middle" letter-spacing="0.5">AMEX</text>
+                    </svg>
+                    <!-- Diners -->
+                    <svg width="38" height="24" viewBox="0 0 38 24" fill="none" xmlns="http://www.w3.org/2000/svg" title="Diners Club">
+                      <rect width="38" height="24" rx="4" fill="#ffffff" stroke="#e5e7eb"/>
+                      <circle cx="15" cy="12" r="5.5" stroke="#004A97" stroke-width="1.8" fill="none"/>
+                      <circle cx="23" cy="12" r="5.5" stroke="#004A97" stroke-width="1.8" fill="none"/>
+                    </svg>
                   </div>
                 </div>
               </div>
@@ -1195,8 +1252,9 @@
           Valor do Pix: R$ 98,10
         </div>
 
-        <div style="font-size: 0.75rem; color: #9ca3af; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
-          Pix processado por <strong style="color: #6366f1; font-weight: 800;">Mercado Pago</strong>
+        <div style="font-size: 0.88rem; color: #4b5563; display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem; margin-top: 0.2rem;">
+          <span>Pix processado por</span>
+          <img src="mercado-pago-logo.png" alt="Mercado Pago" style="height: 38px; width: auto; vertical-align: middle;">
         </div>
       </div>
     </div>
@@ -1230,6 +1288,15 @@
     let pixTimerSeconds = 28 * 60 + 25; // 28:25 Timer (Image 4)
     let mpInstance = null;
 
+    // Meta Pixel TrackOnce Helper
+    function trackOnce(key, eventName, parameters = {}) {
+      if (sessionStorage.getItem(key)) return;
+      if (typeof window.fbq === 'function') {
+        window.fbq('track', eventName, parameters);
+        sessionStorage.setItem(key, 'true');
+      }
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       const params = new URLSearchParams(window.location.search);
       const packId = params.get('pack') || '1';
@@ -1237,6 +1304,14 @@
         selectedPackage = PACKAGES[packId];
       }
       updateSidebarSummary();
+
+      // Track InitiateCheckout once per session
+      trackOnce('meta_initiate_checkout', 'InitiateCheckout', {
+        content_name: selectedPackage.title,
+        content_type: 'product',
+        currency: 'BRL',
+        value: selectedPackage.price
+      });
 
       // Initialize Mercado Pago
       const baseUrl = window.API_BASE_URL || '';
@@ -1451,6 +1526,19 @@
       setFieldError('cust-phone', 'err-cust-phone', !phoneOk);
 
       if (!nameOk || !emailOk || !cpfOk || !phoneOk) return;
+
+      // Meta Pixel Event: AddPaymentInfo upon successful personal data validation
+      let subtotal = selectedPackage.price;
+      let shippingCost = (selectedShipping === 'transp') ? 14.90 : 0.00;
+      let discount = (selectedPayment === 'pix') ? Number((subtotal * 0.10).toFixed(2)) : 0.00;
+      let total = Number((subtotal + shippingCost - discount).toFixed(2));
+
+      trackOnce('meta_add_payment_info', 'AddPaymentInfo', {
+        content_name: selectedPackage.title,
+        content_type: 'product',
+        currency: 'BRL',
+        value: total
+      });
 
       const btn = document.querySelector('#form-step-1 .btn-step');
       const originalText = btn.innerText;
@@ -1808,7 +1896,17 @@
           overlay.style.display = 'none';
           document.getElementById('mp-payment-result').style.display = 'block';
 
-          if (data.success && (data.status === 'approved' || data.status === 'in_process' || data.status === 'pending')) {
+          if (data.success && data.status === 'approved') {
+            document.getElementById('success-result-box').style.display = 'block';
+            document.getElementById('pay-form-card').style.display = 'none';
+
+            trackOnce('meta_purchase_' + (data.payment_id || Date.now()), 'Purchase', {
+              content_name: selectedPackage.title,
+              content_type: 'product',
+              currency: 'BRL',
+              value: total
+            });
+          } else if (data.success && (data.status === 'in_process' || data.status === 'pending')) {
             document.getElementById('success-result-box').style.display = 'block';
             document.getElementById('pay-form-card').style.display = 'none';
           } else {
@@ -1819,7 +1917,9 @@
 
       } catch (e) {
         overlay.style.display = 'none';
-        alert('Erro de comunicação com a operadora.');
+        document.getElementById('mp-payment-result').style.display = 'block';
+        document.getElementById('error-result-box').style.display = 'block';
+        document.getElementById('error-msg-text').innerText = 'Cartão recusado ou inválido. Verifique os dados digitados e tente novamente.';
       }
     }
 
@@ -1846,6 +1946,18 @@
           const data = await res.json();
           if (data.success && data.status === 'approved') {
             clearInterval(statusPollInterval);
+
+            let subtotal = selectedPackage.price;
+            let shippingCost = (selectedShipping === 'transp') ? 14.90 : 0.00;
+            let total = Number(((subtotal * 0.90) + shippingCost).toFixed(2));
+
+            trackOnce('meta_purchase_' + id, 'Purchase', {
+              content_name: selectedPackage.title,
+              content_type: 'product',
+              currency: 'BRL',
+              value: total
+            });
+
             alert('🎉 Pagamento PIX Confirmado!');
             window.location.reload();
           }

@@ -13,6 +13,36 @@ function selectCard(selectedElement) {
 }
 
 // ==========================================================================
+// UTMIFY & TRACKING PARAMETERS LOGIC
+// ==========================================================================
+function captureTrackingParameters() {
+  const params = new URLSearchParams(window.location.search);
+  const trackingData = {
+    src: params.get('src') || '',
+    sck: params.get('sck') || '',
+    utm_source: params.get('utm_source') || '',
+    utm_medium: params.get('utm_medium') || '',
+    utm_campaign: params.get('utm_campaign') || '',
+    utm_content: params.get('utm_content') || '',
+    utm_term: params.get('utm_term') || ''
+  };
+
+  for (const key in trackingData) {
+    if (trackingData[key]) {
+      localStorage.setItem(`ds_${key}`, trackingData[key]);
+    } else {
+      trackingData[key] = localStorage.getItem(`ds_${key}`) || '';
+    }
+  }
+  return trackingData;
+}
+
+// Capture and save UTMs on page load (works on both index.html and checkout.html)
+document.addEventListener('DOMContentLoaded', () => {
+  captureTrackingParameters();
+});
+
+// ==========================================================================
 // MERCADO PAGO CHECKOUT TRANSPARENTE LOGIC
 // ==========================================================================
 
@@ -39,10 +69,29 @@ function initMercadoPagoSDK() {
   }
 }
 
+// Meta Pixel TrackOnce Helper
+function trackOnce(key, eventName, parameters = {}) {
+  if (sessionStorage.getItem(key)) return;
+  if (typeof window.fbq === 'function') {
+    window.fbq('track', eventName, parameters);
+    sessionStorage.setItem(key, 'true');
+  }
+}
+
 // Redirect to Checkout Page matching Image 1
 function goToCheckout() {
   const selectedCard = document.querySelector('.price-card.selected');
   const packId = selectedCard ? (selectedCard.getAttribute('data-pack') || '1') : '1';
+  const packTitle = selectedCard ? (selectedCard.getAttribute('data-title') || 'Dream Sleep - Adesivo de Sono') : 'Dream Sleep - Adesivo de Sono';
+  const packPrice = selectedCard ? (parseFloat(selectedCard.getAttribute('data-price')) || 109.00) : 109.00;
+
+  trackOnce('meta_initiate_checkout', 'InitiateCheckout', {
+    content_name: packTitle,
+    content_type: 'product',
+    currency: 'BRL',
+    value: packPrice
+  });
+
   window.location.href = `checkout.html?pack=${packId}`;
 }
 
@@ -176,6 +225,7 @@ async function submitPixPayment() {
     payload.payment_method_id = 'pix';
     payload.transaction_amount = currentOrder.price;
     payload.description = `Dream Sleep - ${currentOrder.title}`;
+    payload.tracking_parameters = captureTrackingParameters();
 
     const response = await fetch('/api/process-payment', {
       method: 'POST',
@@ -256,6 +306,7 @@ async function submitCardPayment() {
     payload.transaction_amount = currentOrder.price;
     payload.description = `Dream Sleep - ${currentOrder.title}`;
     payload.installments = installments;
+    payload.tracking_parameters = captureTrackingParameters();
     if (token) payload.token = token;
 
     const response = await fetch('/api/process-payment', {

@@ -5,13 +5,6 @@ function selectCard(selectedElement) {
   selectedElement.classList.add('selected');
 }
 
-// Pricing Card Selection
-function selectCard(selectedElement) {
-  const cards = document.querySelectorAll('.price-card');
-  cards.forEach(card => card.classList.remove('selected'));
-  selectedElement.classList.add('selected');
-}
-
 // ==========================================================================
 // UTMIFY & TRACKING PARAMETERS LOGIC
 // ==========================================================================
@@ -24,7 +17,10 @@ function captureTrackingParameters() {
     utm_medium: params.get('utm_medium') || '',
     utm_campaign: params.get('utm_campaign') || '',
     utm_content: params.get('utm_content') || '',
-    utm_term: params.get('utm_term') || ''
+    utm_term: params.get('utm_term') || '',
+    campaign_id: params.get('campaign_id') || '',
+    adset_id: params.get('adset_id') || '',
+    ad_id: params.get('ad_id') || ''
   };
 
   for (const key in trackingData) {
@@ -48,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let currentOrder = {
   title: '1 pacote (48 Adesivos)',
-  price: 67.90,
+  price: 47.90,
   pack: '1'
 };
 
@@ -74,13 +70,15 @@ function goToCheckout() {
   const selectedCard = document.querySelector('.price-card.selected');
   const packId = selectedCard ? (selectedCard.getAttribute('data-pack') || '1') : '1';
   const packTitle = selectedCard ? (selectedCard.getAttribute('data-title') || 'Dream Sleep - Adesivo de Sono') : 'Dream Sleep - Adesivo de Sono';
-  const packPrice = selectedCard ? (parseFloat(selectedCard.getAttribute('data-price')) || 109.00) : 109.00;
+  const packPrice = selectedCard ? (parseFloat(selectedCard.getAttribute('data-price')) || 47.90) : 47.90;
 
   if (typeof window.trackInitiateCheckout === 'function') {
     window.trackInitiateCheckout(packId, packTitle, packPrice);
   }
 
-  window.location.href = `checkout.html?pack=${packId}`;
+  const currentParams = new URLSearchParams(window.location.search);
+  currentParams.set('pack', packId);
+  window.location.href = `checkout.html?${currentParams.toString()}`;
 }
 
 function closeCheckoutModal() {

